@@ -7,6 +7,8 @@ set(CMAKE_AUTOMOC ON)
 
 find_package(Qt5Core)
 
-add_executable(${PROJECT_NAME} "main.cpp")
+aux_source_directory(. DIR_SRCS)
+
+add_executable(${PROJECT_NAME}  ${DIR_SRCS})
 
 target_link_libraries(${PROJECT_NAME} Qt5::Core)
