@@ -22,7 +22,44 @@ void myprint(const T& firstArg, const Types&... args)
     myprint(args...);
 }
 
+// 1. variadic template;  sizeof...(args) ; 最特化的优先
+int maximum(int n){
+    return n;
+}
+template<typename... Args>
+int maximum(int n1, Args... args){
+    return std::max(n1, maximum(args...));
+}
+
+// 1. variadic template;  sizeof...(args) ; 第一个和最后一个处理不同于中间项目的处理
+// todo: very important, 模版递归的创建；
+
+template<int IDX, int MAX, typename... Args>
+struct myPrintx{
+    static void print(ostream &os, const tuple<Args...>& t){
+        os << get<IDX>(t) << (IDX+1==MAX?"":",");
+        myPrintx<IDX+1, MAX, Args...>::print(os, t);
+    }
+};
+
+template<int MAX, typename... Args>
+struct myPrintx<MAX, MAX, Args...>{    //variadic template 居然可以在调用的过程中比较大小，然后创建模版
+    static void print(ostream &os, const tuple<Args...>& t){
+    }
+};
+
+template <typename... Args>
+ostream & operator <<(ostream &os, const tuple<Args...> &t){
+    os << "[";
+    myPrintx<0, sizeof...(Args), Args...>::print(os, t);
+    return os << "]";
+}
+
+
 // 可以实现递归继承；如Tuple的实现
+
+
+
 
 /* 2. nullptr
  *
@@ -42,6 +79,14 @@ void myprint1(std::initializer_list<int> vals)
     }
     std::cout << endl;
 }
+
+// 4. range-based loop: for loop, 见templatetemplatepar中，注意和qt的foreach区别
+
+// 5. =default 和 =delete只应用于类的默认构造函数、copy构造、赋值构造、析构
+
+// 6. Rvalue reference, 右值引用；c++ 2.0的新类型；目标：避免不必要的copy，执行perfect forwarding，和move semantics相关
+
+
 
 /* const 必须写的场景。是否加const十分重要；
  * const complex c1(2,1);
@@ -147,8 +192,40 @@ void myprint1(std::initializer_list<int> vals)
 
 #include <anothertemplatepar.h>
 
+// 5. alias template ,就是下面的using
+// 一般和template template parameter使用，解决不match的问题，从而将2参数template转换为1参数的template，
+// 解决编译器无法推导的问题，也就是直接写明推导。
 template <typename T>
-using lst = std::list<T,allocator<T>>;
+using lst = std::list<T,allocator<T>>;  // 后边的allocator直接就写出了推导方式，
+                                        // 而不用编译器自己推导list（这情况下编译器推导不了，必须写明）
+// 6. type alias, 就是using，类似typedef; using使用可以简化类定义，直接using别的类的成员，如果他们定义相等的话。
+using func = int(*)(int, char **);
+
+// 7. noexcept
+
+// 8. override, 新增关键字，在virtual虚函数中写明是override，防止写错虚函数。
+
+// 9. final， 新增关键字， 声明类体系的最终类，防止继承；在virtual虚函数中写明是final，指明虚函数不能在子类中重新定义；
+
+// 10. decltype, 新增关键字，等同于typeof;用于返回值自动推导,c++2.0的函数返回类型可以在参数列表后以箭头给出；用于lambda的返回类型；
+// 如果auto用太多了，那么decltype有时候就必须用来推导类型了。
+template <typename T1, typename T2>
+auto add(T1 x, T2 y)->decltype(x+y){
+ return x+y;
+}
+
+/* 11. lambda, 类似于一个函数对象；但是有些不同，无构造函数，无赋值构造。
+ * 定义方式： [...] (...) mutable throwSpec -> return value {...};
+ * [...] 表明by value , by reference
+ * mutable: 如果｛｝中更改[...]中引入的变量，必须写mutable
+ *
+ */
+
+
+
+std::vector<int> vec {1,2,3,4,5,6};
+decltype(vec)::value_type ppp=0;
+
 
 int main(int argc, char *argv[])
 {
@@ -170,10 +247,34 @@ int main(int argc, char *argv[])
 
     std::cout << "anothertemplatepar" << std::endl;
 
+
     anothertemplatepar<int, std::vector<int>> an;  //管理方变更
     an.Init({1,2,3,4,4});
     an.MyPrint();
+    // 10
+    std::cout << add(1,5) << std::endl;
+
+
+    // 1. variadic template;  sizeof...(args) ; 最特化的优先
+//    int maximum(int n){
+//        return n;
+//    }
+//    template<typename... Args>
+//    int maximum(int n1, Args... args){
+//        return std::max(n1, maximum(args...));
+//    }
+
+    // 1. variadic template;  sizeof...(args) ; 最特化的优先
+    std::cout << maximum(1,2,3,4,5,6,7,9) << std::endl;
+
+    // 1. variadic template;  sizeof...(args) ; 第一个和最后一个处理不同于中间项目的处理
+    // todo: very important
+    std::cout << make_tuple(1,2,3,4,"3344",45);
+
 
     return 0;
 
 }
+
+
+func mymain = main;  // 类似typedef

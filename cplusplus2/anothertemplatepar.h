@@ -2,6 +2,9 @@
 #define ANOTHERTEMPLATEPAR_H
 // 另一个能够达到上边templatetemplatepar的内存管理需求的类，但是不是模版参数的模版，仅仅是2个模版参数,
 #include <list>
+#include <iostream>
+
+
 
 template <typename T, typename container = std::list<T>>
 class anothertemplatepar
