@@ -55,8 +55,54 @@ ostream & operator <<(ostream &os, const tuple<Args...> &t){
     return os << "]";
 }
 
+// 1. variadic template;  递归的继承：
+namespace  xue_variadic {
+template <typename... Values> class tuple;
+template <> class tuple<>{};
 
-// 可以实现递归继承；如Tuple的实现
+template <typename Head, typename... Tail>
+class tuple<Head, Tail...>: private tuple<Tail...>
+{
+ typedef tuple<Tail...> inherited;
+protected:
+    Head m_head;
+public:
+    tuple(){};
+
+    //这里的 inherited(vtail...)不是变量赋值，而是父类创建
+    tuple(Head v, Tail... vtail):m_head(v), inherited(vtail...)
+    {
+    };
+    //Head head(){return m_head;};
+    auto head()->decltype(m_head){return m_head;};
+    inherited& tail(){return *this;};
+};
+
+}
+
+
+// 1. variadic template; 模版递归的组合；
+// todo: very important, 模版递归的组合；
+template <typename... Values> class tup;
+template <> class tup<>{};
+
+template <typename Head, typename... Tail>
+class tup<Head, Tail...>
+{
+   typedef tup<Tail...> composited;
+protected:
+    composited m_tail;
+    Head m_head;
+public:
+    tup(){};
+    tup(Head v, Tail... vtail):m_head(v),m_tail(vtail...)  // variadic template的组合，最后为template<>
+    {};
+    Head head(){return m_head;};
+    composited & tail(){return m_tail;};
+};
+
+
+
 
 
 
@@ -221,7 +267,23 @@ auto add(T1 x, T2 y)->decltype(x+y){
  *
  */
 
-
+/* 12. Rvalue reference； 右值引用；右值存在的目的就是为了避免不必要的copy，加速性能。但实际只影响Vector（会后台grow，copy数据）等会自动
+ * grow的STL结构。
+ * 右值形式： int&& i;
+ * std:move  将左值变为右值
+ * 右值传递过程中，存在在传递调用问题，也就是一个右值a传入一个函数A调用后,函数A中将右值a在传入函数B进行右值调用，
+ * 此时右值a将变为左值，也就是右值的前向传递发生了语义变化，为了保持右值语义，必须使用std：forward
+ *
+ * 一个类要提供move-aware的语义，该类必须提供copy构造、赋值构造的右值引用类型；
+ *
+ * 13.新类型array<typename, size>,用来辅助initial_list生成，一般不直接运用
+ * 14.hashable, 也就是一个类要能够hash，那么需要提供一个固定的函数来提供hash，也就是_Hash_impl类；也就是模拟python类中必有的__hash__(self)函数
+ * 15.tuple,元组类
+ *
+ *
+ *
+ *
+ */
 
 std::vector<int> vec {1,2,3,4,5,6};
 decltype(vec)::value_type ppp=0;
